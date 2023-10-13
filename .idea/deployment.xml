@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="wax01" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="wax01">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/projects/swap-router" local="$PROJECT_DIR$" web="/projects/swap-router" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>
