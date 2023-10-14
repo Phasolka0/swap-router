@@ -61,6 +61,7 @@ function tryParseCurrencyAmount(value, currency) {
     catch (error) {
         // fails if the user specifies too many decimal places of precision (or maybe exceed max uint?)
         console.debug(`Failed to parse input amount: "${value}"`, error);
+        console.log(currency);
     }
     return undefined;
 }

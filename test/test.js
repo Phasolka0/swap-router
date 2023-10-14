@@ -5,7 +5,7 @@ async function main() {
         'trade_type=EXACT_INPUT&' +
         'input=wax-eosio.token&' +
         'output=tlm-alien.worlds&' +
-        'amount=10000.00000000&slippage=0.30&' +
+        'amount=1.00000000&slippage=0.30&' +
         'receiver=unobe.wam&maxHops=3')
 
     console.log(await response.json())

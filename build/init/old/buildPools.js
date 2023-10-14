@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildPools = exports.parseToken = exports.tokens = exports.allPools = void 0;
+exports.buildPools = exports.parseToken = exports.tokens = exports.allPoolsMap = exports.allPools = void 0;
 const alcor_swap_sdk_1 = require("@phasolka0/alcor-swap-sdk");
 const eos_common_1 = require("eos-common");
+exports.allPools = [];
+exports.allPoolsMap = {};
 exports.tokens = new Map();
 function parseToken(token) {
     return new alcor_swap_sdk_1.Token(token.contract, (0, eos_common_1.asset)(token.quantity).symbol.precision(), (0, eos_common_1.asset)(token.quantity).symbol.code().to_string());
@@ -28,10 +30,10 @@ function buildPools(pools) {
         //if (!parsedTokenA || !parsedTokenB) throw new Error('!parsedTokenA || !parsedTokenB')
         //const idA = parsedTokenA.id || ''
         //const idB = parsedTokenB.id || ''
-        // const alcorPoolA = new AlcorPool(idA, idB, simplePool)
-        // const alcorPoolB = new AlcorPool(idB, idA, simplePool)
-        // tokens.set(idA, parsedTokenA)
-        // tokens.set(idB, parsedTokenB)
+        //const alcorPoolA = new AlcorPool(idA, idB, simplePool)
+        //const alcorPoolB = new AlcorPool(idB, idA, simplePool)
+        exports.tokens.set(parsedTokenA.id, parsedTokenA);
+        exports.tokens.set(parsedTokenB.id, parsedTokenB);
         //
         //
         // if (!allPools[idA]) {
@@ -43,5 +45,13 @@ function buildPools(pools) {
         //
         // const poolsA = tokenIdToPools.get(idA)
     }
+    exports.allPools.forEach((pool) => {
+        const tokenAId = pool.tokenA.id;
+        const tokenBId = pool.tokenB.id;
+        exports.allPoolsMap[tokenAId] = exports.allPoolsMap[tokenAId] || [];
+        exports.allPoolsMap[tokenBId] = exports.allPoolsMap[tokenBId] || [];
+        exports.allPoolsMap[tokenAId].push(pool);
+        exports.allPoolsMap[tokenBId].push(pool);
+    });
 }
 exports.buildPools = buildPools;

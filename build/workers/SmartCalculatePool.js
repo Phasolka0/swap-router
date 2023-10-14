@@ -35,9 +35,8 @@ class SmartCalculatePool {
         instance.workers = await Promise.all(promises);
         return instance;
     }
-    addTask(token, taskOptions) {
-        const newTaskOptions = { ...taskOptions, token };
-        this.tokenToTasks.set(token, taskOptions);
+    addTask(taskOptions) {
+        this.tokenToTasks.set(this.tokenToTasks.size, taskOptions);
     }
     async waitForWorkersAndReturnResult() {
         this.resultsArray = [];
@@ -54,7 +53,7 @@ class SmartCalculatePool {
                 break;
             this.tokenToTasks.delete(token);
             console.log(taskOptions);
-            const result = await worker.workerInstance[taskOptions.method](taskOptions);
+            const result = await worker.workerInstance.fromRoute(taskOptions);
             if (result) {
                 this.resultsArray.push(result);
             }
