@@ -1,13 +1,16 @@
 import AlcorPool from "../../pools/AlcorPool";
-import {createPool} from "../../workers/createWorkerPool";
 import {startServer} from "../../server/server";
-import {buildPools} from "./buildPools";
+import {allPools, buildPools} from "./buildPools";
+import {Trade} from "@phasolka0/alcor-swap-sdk";
 
 export default async function () {
     const startTime = Date.now()
-    const allPools = await AlcorPool.fetchAllPools()
-    buildPools(allPools)
-    await createPool(allPools)
+    const rawPools = await AlcorPool.fetchAllPools()
+    buildPools(rawPools)
+    await Trade.initWorkerPool(7)
+
+    // Prepare pools on workers, optionally
+    //await Trade.workerPool.updatePools(allPools)
     startServer()
     console.log('init time:', Date.now() - startTime)
 

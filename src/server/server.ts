@@ -7,57 +7,29 @@ import {
     CurrencyAmount,
     Percent,
     Route, Token,
-    Trade
+    Trade, TradeType
 } from "@phasolka0/alcor-swap-sdk";
 import {allPools, allPoolsMap, tokens} from "../init/old/buildPools";
 import {tryParseCurrencyAmount} from "../utils/utils";
-import { isEqual } from 'lodash';
+import {isEqual} from 'lodash';
 import {equal} from "assert";
 
-const TRADE_OPTIONS = { maxNumResults: 1, maxHops: 3 }
+const TRADE_OPTIONS = {maxNumResults: 1, maxHops: 3}
 const ROUTES: Map<string, Route<Token, Token>[]> = new Map();
 
-function getRoutesOld(inputTokenID: string, outputTokenID: string, maxHops = 2) {
-    const cache_key = `${inputTokenID}-${outputTokenID}-${maxHops}`
+function getRoutes(inputToken: Token, outputToken: Token, maxHops = 2) {
+    const cache_key = `${inputToken.id}-${outputToken.id}-${maxHops}`;
 
     if (ROUTES.has(cache_key)) {
         return ROUTES.get(cache_key);
     }
+    const routes = computeAllRoutesFromMap(inputToken, outputToken, allPoolsMap, maxHops);
 
-    // We pass chain to keep cache for different chains
-    const input = allPools.find(p => p.tokenA.id == inputTokenID)?.tokenA || allPools.find(p => p.tokenB.id == inputTokenID)?.tokenB
-    const output = allPools.find(p => p.tokenA.id == outputTokenID)?.tokenA || allPools.find(p => p.tokenB.id == outputTokenID)?.tokenB
-    let routes
-    if (typeof input !== 'undefined' && typeof output !== 'undefined') {
-        routes = computeAllRoutes(input, output, allPools, maxHops)
-    }
-
-
-    // Caching
-    // if (typeof routes !== 'undefined') {
-    //     ROUTES.set(cache_key, routes);
-    // }
-
+    ROUTES.set(cache_key, routes);
 
     return routes;
 }
-function getRoutes(inputTokenID: any, outputTokenID: any, maxHops = 2) {
-    const cache_key = `${inputTokenID}-${outputTokenID}-${maxHops}`;
 
-    if (ROUTES.has(cache_key)) {
-        return ROUTES.get(cache_key);
-    }
-
-    const input = tokens.get(inputTokenID)
-    const output = tokens.get(outputTokenID)
-
-    //console.log(input, output)
-    const routes = computeAllRoutesFromMap(input, output, allPoolsMap, maxHops);
-
-    //ROUTES.set(cache_key, routes);
-
-    return routes;
-}
 function cacheAllPossibleRoutes(maxHops = 2) {
     const allTokenIDs = Object.keys(allPoolsMap);
 
@@ -110,20 +82,20 @@ export function startServer() {
 
     app.listen(mainThreadPort, '127.0.0.1', async () => {
         console.log('MainThread started');
-        await Trade.initWorkerPool(16)
-        // const startTime = Date.now()
-        // cacheAllPossibleRoutes()
-        // console.log('cacheAllPossibleRoutes', Date.now() - startTime)
     });
 
     app.get('/getRoute', async (req, res) => {
-        console.log('getRoute')
-        console.log(req.query)
 
-        let { trade_type, input, output, amount, slippage, receiver = '<receiver>', maxHops } = <any>req.query
+        let {trade_type, input, output, amount, slippage, receiver = '<receiver>', maxHops} = <any>req.query
 
         if (!trade_type || !input || !output || !amount)
             return res.status(403).send('Invalid request')
+
+        if (trade_type !== TradeType[TradeType.EXACT_OUTPUT] && trade_type !== TradeType[TradeType.EXACT_INPUT])
+            return res.status(403).send('Invalid trade_type')
+        const exactIn = trade_type == 'EXACT_INPUT'
+        trade_type = TradeType[trade_type]
+
 
         if (!slippage) slippage = 0.3
         slippage = new Percent(slippage * 100, 10000)
@@ -131,88 +103,54 @@ export function startServer() {
         // Max hoop can be only 3 due to perfomance
         if (maxHops !== undefined) TRADE_OPTIONS.maxHops = Math.min(parseInt(maxHops), 3)
 
-        const exactIn = trade_type == 'EXACT_INPUT'
 
+        const inputToken = tokens.get(input)
+        const outputToken = tokens.get(output)
+        if (!inputToken || !outputToken) return res.status(403).send('Invalid input/output')
 
-        //input = tokens.get(input)
-        //output = tokens.get(output)
-        const inputToken = allPools.find(p => p.tokenA.id == input)?.tokenA || allPools.find(p => p.tokenB.id == input)?.tokenB
-        const outputToken = allPools.find(p => p.tokenA.id == output)?.tokenA || allPools.find(p => p.tokenB.id == output)?.tokenB
-        //console.log(input)
-        if (!input || !output) return res.status(403).send('Invalid input/output')
-
-        amount = tryParseCurrencyAmount(amount, exactIn ? inputToken  : outputToken)
+        amount = tryParseCurrencyAmount(amount, exactIn ? inputToken : outputToken)
         if (!amount) return res.status(403).send('Invalid amount')
 
         const startTime = performance.now()
+        const routes = getRoutes(inputToken, outputToken, TRADE_OPTIONS.maxHops)
+        if (!routes || routes.length === 0) return res.status(403).send('No route found')
 
         let trade
-        if (exactIn) {
-            const startTime = Date.now()
-            const routes = getRoutes(input, output, Math.min(maxHops, 3))
-            if (routes) {
-                const route = Route.toJSON(routes[0])
-                const buffer = msgpack.encode(route)
-                const deserialized = msgpack.decode(buffer)
-                console.log('deserialized isEqual:', isEqual(route, deserialized))
-            }
-
-
-
-
-            console.log('getRoutes', Date.now() - startTime)
-            if (typeof routes !== 'undefined') {
-                await Trade.bestTradeExactIn3(routes, allPools, amount, Math.min(3, maxHops))
-            } else {
-                res.status(403).send('No route found')
-            }
-
-            // } else {
-            //   [trade] = await Trade.bestTradeExactIn(
-            //     POOLS,
-            //     amount,
-            //     outputToken,
-            //     { maxNumResults: 1, maxHops }
-            //   )
-            // }
-        } else {
-            // [trade] = await Trade.bestTradeExactOut(
-            //     allPools,
-            //     inputToken,
-            //     amount,
-            //     { maxNumResults: 1, maxHops }
-            // )
+        try {
+            trade = await Trade.bestTradeMultiThreads(routes, allPools, amount, trade_type)
+        } catch (e) {
+            console.log(e)
+            trade = Trade.bestTradeSingleThread(routes, allPools, amount, trade_type)
         }
 
-        // const endTime = performance.now()
-        //
-        // console.log(`find route took maxHops('${TRADE_OPTIONS.maxHops}') ${endTime - startTime} milliseconds`)
-        //
-        // if (!trade) return res.status(403).send('No route found')
-        //
-        // const method = exactIn ? 'swapexactin' : 'swapexactout'
-        // const route = trade.route.pools.map(p => p.id)
-        //
-        // const maxSent = exactIn ? trade.inputAmount : trade.maximumAmountIn(slippage)
-        // const minReceived = exactIn ? trade.minimumAmountOut(slippage) : trade.outputAmount
-        //
-        // // Memo Format <Service Name>#<Pool ID's>#<Recipient>#<Output Token>#<Deadline>
-        // const memo = `${method}#${route.join(',')}#${receiver}#${minReceived.toExtendedAsset()}#0`
-        //
-        // const result = {
-        //     input: trade.inputAmount.toFixed(),
-        //     output: trade.outputAmount.toFixed(),
-        //     minReceived: minReceived.toFixed(),
-        //     maxSent: maxSent.toFixed(),
-        //     priceImpact: trade.priceImpact.toSignificant(2),
-        //     memo,
-        //     route,
-        //     executionPrice: {
-        //         numerator: trade.executionPrice.numerator.toString(),
-        //         denominator: trade.executionPrice.denominator.toString()
-        //     }
-        // }
-        // console.log(result)
-        // res.json(result)
+        const endTime = performance.now()
+
+        console.log(`find route took maxHops('${TRADE_OPTIONS.maxHops}') ${endTime - startTime} milliseconds`)
+
+        if (!trade) return res.status(403).send('No route found')
+
+        const method = exactIn ? 'swapexactin' : 'swapexactout'
+        const route = trade.route.pools.map(p => p.id)
+
+        const maxSent = exactIn ? trade.inputAmount : trade.maximumAmountIn(slippage)
+        const minReceived = exactIn ? trade.minimumAmountOut(slippage) : trade.outputAmount
+
+        // Memo Format <Service Name>#<Pool ID's>#<Recipient>#<Output Token>#<Deadline>
+        const memo = `${method}#${route.join(',')}#${receiver}#${minReceived.toExtendedAsset()}#0`
+
+        const result = {
+            input: trade.inputAmount.toFixed(),
+            output: trade.outputAmount.toFixed(),
+            minReceived: minReceived.toFixed(),
+            maxSent: maxSent.toFixed(),
+            priceImpact: trade.priceImpact.toSignificant(2),
+            memo,
+            route,
+            executionPrice: {
+                numerator: trade.executionPrice.numerator.toString(),
+                denominator: trade.executionPrice.denominator.toString()
+            }
+        }
+        res.json(result)
     })
 }

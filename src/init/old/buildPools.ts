@@ -6,7 +6,7 @@ import AlcorPool from "../../pools/AlcorPool";
 
 export let allPools: Array<Pool> = []
 export let allPoolsMap: { [tokenId: string]: Pool[] } = {};
-export let tokens = new Map()
+export let tokens: Map<string, Token> = new Map()
 export function parseToken(token: any) {
     return new Token(
         token.contract,
