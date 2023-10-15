@@ -1,5 +1,5 @@
-import AlcorPool from "../../pools/AlcorPool";
-import {startServer} from "../../server/server";
+import AlcorPool from "../pools/AlcorPool";
+import {startServer} from "../server/server";
 import {allPools, buildPools} from "./buildPools";
 import {Trade} from "@phasolka0/alcor-swap-sdk";
 

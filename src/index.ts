@@ -1,4 +1,4 @@
-import init from "./init/old/init";
+import init from "./init/init";
 
 async function start() {
     await init()

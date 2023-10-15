@@ -1,12 +1,13 @@
 import {CurrencyAmount, Pool, Tick, Token} from '@phasolka0/alcor-swap-sdk'
-import {countDecimals} from "../../utils/utils";
-import { asset } from 'eos-common'
-import AlcorPool from "../../pools/AlcorPool";
+import {countDecimals} from "../utils/utils";
+import {asset} from 'eos-common'
+import AlcorPool from "../pools/AlcorPool";
 
 
 export let allPools: Array<Pool> = []
 export let allPoolsMap: { [tokenId: string]: Pool[] } = {};
 export let tokens: Map<string, Token> = new Map()
+
 export function parseToken(token: any) {
     return new Token(
         token.contract,
@@ -15,13 +16,15 @@ export function parseToken(token: any) {
         //(asset(token.quantity).symbol.code().to_string() + '-' + token.contract).toLowerCase()
     )
 }
+
 function buildRoutes() {
 
 }
+
 export function buildPools(pools: Array<any>) {
     for (const pool of pools) {
         const {rawPool, ticks} = pool
-        const {tokenA, tokenB, currSlot: { sqrtPriceX64, tick } } = rawPool
+        const {tokenA, tokenB, currSlot: {sqrtPriceX64, tick}} = rawPool
         const parsedTokenA = parseToken(tokenA)
         const parsedTokenB = parseToken(tokenB)
 

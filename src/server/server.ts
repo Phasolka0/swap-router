@@ -9,7 +9,7 @@ import {
     Route, Token,
     Trade, TradeType
 } from "@phasolka0/alcor-swap-sdk";
-import {allPools, allPoolsMap, tokens} from "../init/old/buildPools";
+import {allPools, allPoolsMap, tokens} from "../init/buildPools";
 import {tryParseCurrencyAmount} from "../utils/utils";
 import {isEqual} from 'lodash';
 import {equal} from "assert";

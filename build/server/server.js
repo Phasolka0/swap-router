@@ -1,17 +1,16 @@
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : {"default": mod};
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-Object.defineProperty(exports, "__esModule", {value: true});
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.startServer = void 0;
 const settings_1 = require("../settings");
 const express_1 = __importDefault(require("express"));
 const alcor_swap_sdk_1 = require("@phasolka0/alcor-swap-sdk");
 const buildPools_1 = require("../init/buildPools");
 const utils_1 = require("../utils/utils");
-const TRADE_OPTIONS = {maxNumResults: 1, maxHops: 3};
+const TRADE_OPTIONS = { maxNumResults: 1, maxHops: 3 };
 const ROUTES = new Map();
-
 function getRoutes(inputToken, outputToken, maxHops = 2) {
     const cache_key = `${inputToken.id}-${outputToken.id}-${maxHops}`;
     if (ROUTES.has(cache_key)) {
@@ -21,7 +20,6 @@ function getRoutes(inputToken, outputToken, maxHops = 2) {
     ROUTES.set(cache_key, routes);
     return routes;
 }
-
 function cacheAllPossibleRoutes(maxHops = 2) {
     const allTokenIDs = Object.keys(buildPools_1.allPoolsMap);
     for (let i = 0; i < allTokenIDs.length; i++) {
@@ -41,7 +39,6 @@ function cacheAllPossibleRoutes(maxHops = 2) {
         }
     }
 }
-
 function compareRoutes(routesOld, routesNew) {
     let missingRoutes = [];
     // Проверяем каждый роут из старой версии
@@ -55,20 +52,18 @@ function compareRoutes(routesOld, routesNew) {
     if (missingRoutes.length > 0) {
         console.log("Missing routes in new version:");
         missingRoutes.forEach(route => console.log(route));
-    } else {
+    }
+    else {
         console.log("All routes from old version exist in new version.");
     }
 }
-
 function startServer() {
     const app = (0, express_1.default)();
     app.listen(settings_1.mainThreadPort, '127.0.0.1', async () => {
         console.log('MainThread started');
-        await alcor_swap_sdk_1.Trade.initWorkerPool();
-        //await Trade.workerPool.updatePools(allPools)
     });
     app.get('/getRoute', async (req, res) => {
-        let {trade_type, input, output, amount, slippage, receiver = '<receiver>', maxHops} = req.query;
+        let { trade_type, input, output, amount, slippage, receiver = '<receiver>', maxHops } = req.query;
         if (!trade_type || !input || !output || !amount)
             return res.status(403).send('Invalid request');
         if (trade_type !== alcor_swap_sdk_1.TradeType[alcor_swap_sdk_1.TradeType.EXACT_OUTPUT] && trade_type !== alcor_swap_sdk_1.TradeType[alcor_swap_sdk_1.TradeType.EXACT_INPUT])
@@ -80,7 +75,7 @@ function startServer() {
         slippage = new alcor_swap_sdk_1.Percent(slippage * 100, 10000);
         // Max hoop can be only 3 due to perfomance
         if (maxHops !== undefined)
-            TRADE_OPTIONS.maxHops = Math.min(parseInt(maxHops), 5);
+            TRADE_OPTIONS.maxHops = Math.min(parseInt(maxHops), 3);
         const inputToken = buildPools_1.tokens.get(input);
         const outputToken = buildPools_1.tokens.get(output);
         if (!inputToken || !outputToken)
@@ -95,7 +90,8 @@ function startServer() {
         let trade;
         try {
             trade = await alcor_swap_sdk_1.Trade.bestTradeMultiThreads(routes, buildPools_1.allPools, amount, trade_type);
-        } catch (e) {
+        }
+        catch (e) {
             console.log(e);
             trade = alcor_swap_sdk_1.Trade.bestTradeSingleThread(routes, buildPools_1.allPools, amount, trade_type);
         }
@@ -122,9 +118,7 @@ function startServer() {
                 denominator: trade.executionPrice.denominator.toString()
             }
         };
-        console.log(result);
         res.json(result);
     });
 }
-
 exports.startServer = startServer;
