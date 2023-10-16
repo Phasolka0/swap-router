@@ -11,7 +11,7 @@ async function default_1() {
     const startTime = Date.now();
     const rawPools = await AlcorPool_1.default.fetchAllPools();
     (0, buildPools_1.buildPools)(rawPools);
-    await alcor_swap_sdk_1.Trade.initWorkerPool(16);
+    await alcor_swap_sdk_1.Trade.initWorkerPool(7);
     // Prepare pools on workers, optionally
     //await Trade.workerPool.updatePools(allPools)
     (0, server_1.startServer)();

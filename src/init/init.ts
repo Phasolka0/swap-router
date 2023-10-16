@@ -7,7 +7,7 @@ export default async function () {
     const startTime = Date.now()
     const rawPools = await AlcorPool.fetchAllPools()
     buildPools(rawPools)
-    await Trade.initWorkerPool(16)
+    await Trade.initWorkerPool(7)
 
     // Prepare pools on workers, optionally
     //await Trade.workerPool.updatePools(allPools)
