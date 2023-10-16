@@ -1,7 +1,5 @@
-import {CurrencyAmount, Pool, Tick, Token} from '@phasolka0/alcor-swap-sdk'
-import {countDecimals} from "../utils/utils";
+import {Pool, Tick, Token} from '@phasolka0/alcor-swap-sdk'
 import {asset} from 'eos-common'
-import AlcorPool from "../pools/AlcorPool";
 
 
 export let allPools: Array<Pool> = []
@@ -15,10 +13,6 @@ export function parseToken(token: any) {
         asset(token.quantity).symbol.code().to_string(),
         //(asset(token.quantity).symbol.code().to_string() + '-' + token.contract).toLowerCase()
     )
-}
-
-function buildRoutes() {
-
 }
 
 export function buildPools(pools: Array<any>) {

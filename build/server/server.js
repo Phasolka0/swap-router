@@ -89,11 +89,11 @@ function startServer() {
             return res.status(403).send('No route found');
         let trade;
         try {
-            trade = await alcor_swap_sdk_1.Trade.bestTradeMultiThreads(routes, buildPools_1.allPools, amount, trade_type);
+            trade = await alcor_swap_sdk_1.Trade.bestTradeMultiThreads(routes, amount, trade_type);
         }
         catch (e) {
             console.log(e);
-            trade = alcor_swap_sdk_1.Trade.bestTradeSingleThread(routes, buildPools_1.allPools, amount, trade_type);
+            trade = alcor_swap_sdk_1.Trade.bestTradeSingleThread(routes, amount, trade_type);
         }
         const endTime = performance.now();
         console.log(`find route took maxHops('${TRADE_OPTIONS.maxHops}') ${endTime - startTime} milliseconds`);

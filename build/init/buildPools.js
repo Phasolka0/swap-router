@@ -10,8 +10,6 @@ function parseToken(token) {
     return new alcor_swap_sdk_1.Token(token.contract, (0, eos_common_1.asset)(token.quantity).symbol.precision(), (0, eos_common_1.asset)(token.quantity).symbol.code().to_string());
 }
 exports.parseToken = parseToken;
-function buildRoutes() {
-}
 function buildPools(pools) {
     for (const pool of pools) {
         const { rawPool, ticks } = pool;

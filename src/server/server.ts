@@ -117,10 +117,10 @@ export function startServer() {
 
         let trade
         try {
-            trade = await Trade.bestTradeMultiThreads(routes, allPools, amount, trade_type)
+            trade = await Trade.bestTradeMultiThreads(routes, amount, trade_type)
         } catch (e) {
             console.log(e)
-            trade = Trade.bestTradeSingleThread(routes, allPools, amount, trade_type)
+            trade = Trade.bestTradeSingleThread(routes, amount, trade_type)
         }
 
         const endTime = performance.now()
